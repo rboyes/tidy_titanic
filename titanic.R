@@ -38,11 +38,6 @@ wf_final <- finalize_workflow(wf_titanic, best_params) %>% fit(data = df_train)
 
 df_preds <- wf_final %>% predict(df_test, type = "prob") %>% bind_cols(df_test)
 df_preds <- wf_final %>% predict(df_test) %>% bind_cols(df_preds)
-df_metrics <- df_preds %>% conf_mat(truth = Survived, estimate = .pred_class) %>% summary()
-
-df_preds %>% roc_auc(target, .pred_heart_disease)
-
-df_preds %>% roc_curve(target, .pred_heart_disease) %>% autoplot()
 
 rf_final <- pull_workflow_fit(wf_final)
 mat_importance <- importance(rf_final$fit)
