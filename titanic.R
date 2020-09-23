@@ -1,12 +1,12 @@
 library(tidyverse)
 library(tidymodels)
 library(titanic)
+library(randomForest)
 
 
 
 df_train <- titanic_train
 df_test <- titanic_test
-df_test <- df_test %>% filter(PassengerId != 1306)
 
 df_train <- df_train %>% mutate(Survived = as.factor(Survived))
 
