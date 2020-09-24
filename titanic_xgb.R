@@ -2,11 +2,10 @@ library(tidyverse)
 library(tidymodels)
 library(titanic)
 library(xgboost)
-
+library(doParallel)
 
 tbl_train <- tibble(titanic_train) %>% mutate(Survived = as.factor(Survived))
 tbl_test <- tibble(titanic_test)
-
 
 rcp_transform <- recipe(Survived ~ ., tbl_train) %>%
   step_mutate(Title = str_extract(Name, "Mr\\.|Mrs\\.|Miss\\.|Master\\.")) %>%
@@ -34,25 +33,31 @@ xgb_spec <- boost_tree(
   set_engine("xgboost") %>% 
   set_mode("classification")
 
-xgb_grid <- grid_latin_hypercube(
+xgb_grid <- grid_random(
   tree_depth(),
   min_n(),
   loss_reduction(),
   sample_size = sample_prop(),
   finalize(mtry(), tbl_train),
   learn_rate(),
-  size = 30
+  size = 500
 )
 
 wf_titanic <- workflow() %>% add_recipe(rcp_transform) %>% add_model(xgb_spec)
 
 vfold <- vfold_cv(tbl_train, v = 4, repeats = 1, strata = Survived)
 
+cluster <- makeCluster(4, type = 'PSOCK')
+registerDoParallel(cluster)
 xgb_res <- tune_grid(wf_titanic, 
                      resamples = vfold, 
                      grid = xgb_grid, 
                      control = control_grid(save_pred = TRUE, 
-                                            verbose = TRUE))
+                                            verbose = TRUE,
+                                            pkgs = c("tidyverse", "tidymodels")))
+
+stopCluster(cluster)
+registerDoSEQ()
 
 best_params <- select_best(xgb_res, metric = "roc_auc")
 
