@@ -1,2 +1,2 @@
-# tidy_titanic
-Using the tidymodels package to analyse the titanic dataset 
+# Uisng R's TidyModels
+Using the tidymodels package to analyse the various data sets.
